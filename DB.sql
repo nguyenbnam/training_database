@@ -3,34 +3,41 @@ SELECT  id, name, address, email FROM training_mw.customers;
 -- 2: liệt kê danh sách sản phẩm được tạo trong tháng 
 SELECT  * FROM training_mw.products WHERE MONTH(cdate) = MONTH(CURDATE()) ;
 -- 3: Liệt kê số lượng khách hàng trong từng tháng của năm 2021  
- SELECT MONTH(cdate), COUNT(name) FROM training_mw.customers GROUP BY MONTH(cdate) ; 
+SELECT MONTH(cdate), COUNT(name) FROM training_mw.customers GROUP BY MONTH(cdate) ; 
 -- 4: liệt kê danh sách 5 khách hàng có tổng tiền mua hàng lớn nhất; // sắp xếp từ to -> bé r lấy  select n theo limit=10
- SELECT * FROM training_mw.customers, training_mw.invoice_lines ORDER BY unit_price DESC limit 5;
--- 5: liệt kê danh sách 10 sản phẩm được mua nhiều nhất : 
-SELECT count(invoice_lines.product_id) FROM training_mw.invoice_lines
-	inner join training_mw.products on invoice_lines.product_id = products.id
-	group by invoice_lines.product_id order by count(invoice_lines.product_id) desc limit 5; 
+select  customers.name, sum(unit_price) from training_mw.invoice_lines 
+inner join training_mw.invoices on invoice_lines.invoice_id = invoices.id  
+inner join training_mw.customers on invoices.customer_id = customers.id
+group by customers.name
+order by sum(unit_price) desc  limit 3;
+-- 5: liệt kê danh sách 5 sản phẩm được mua nhiều nhất : 
+select products.name, count(product_id) from training_mw.invoice_lines 
+inner join training_mw.products
+on invoice_lines.product_id = products.id
+group by products.name
+order by count(product_id) desc limit 5;
 -- 6: liệt kê khách hàng cùng số lần mua hàng của họ 
-SELECT name, count(customer_id)  FROM training_mw.customers 
-	INNER JOIN training_mw.invoices 
-    ON customers.id = invoices.customer_id 
-    group by customer_id; 
+SELECT customers.name, count(customer_id)  FROM training_mw.customers 
+INNER JOIN training_mw.invoices 
+ON customers.id = invoices.customer_id 
+group by customers.name; 
 -- 7: thống kê tổng tiền thu được trong từng tháng của năm 2021
-SELECT MONTH(invoices.date), SUM(unit_price)  
-	FROM training_mw.invoice_lines 
-    INNER JOIN training_mw.invoices 
-    ON invoice_lines.invoice_id = invoices.id 
-    group by invoices.date; 
--- 8: Tìm số sản phẩm được bán nhiều trong tháng 3
-SELECT products.name, (invoice_lines.product_id) 
-	FROM training_mw.invoices 
-    inner join training_mw.invoice_lines  on invoices.id = invoice_lines.invoice_id 
-    inner join training_mw.products on invoice_lines.product_id = products.id 
-    where month(invoices.date)=3;
+ SELECT MONTH(invoices.date), SUM(unit_price)  
+ FROM training_mw.invoice_lines 
+ INNER JOIN training_mw.invoices ON invoice_lines.invoice_id = invoices.id 
+ group by invoices.date; 
+-- 8: Tìm 'số sản phẩm bán được' bán trong tháng 3
+select count(invoice_lines.product_id) from training_mw.products 
+join training_mw.invoice_lines on products.id=invoice_lines.product_id
+where month(cdate) = 3
 -- 9: Liệt kê danh sách 3 khách hàng mà không mua hàng trong 6 tháng gần nhất./.
+-- select * from training_mw.customers
+-- 	inner join training_mw.invoices on customers.id=invoices.customer_id
+--     where (year(curdate())-year(invoices.date)>1) or (year(curdate())-year(invoices.date)=0 and month(curdate())-month(invoices.date)>=5) 
+-- hàm mới bài 9: 3 thang gan nhat 
 select * from training_mw.customers
-	inner join training_mw.invoices on customers.id=invoices.customer_id
-    where (year(curdate())-year(invoices.date)>1) or (year(curdate())-year(invoices.date)=0 and month(curdate())-month(invoices.date)>=5) 
+inner join training_mw.invoices on customers.id = invoices.customer_id
+where  DATEDIFF(curdate(), invoices.date) > 100;
 
 -- CREAT DATBASE NAME  training_mw 
 CREATE DATABASE IF NOT EXISTS `training_mw`;
